@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>dev.dryguard.jetbrains</id>
     <name>DryGuard</name>
-    <vendor email="bobrowsse@gmail.com" url="https://github.com/dryguard-dev/dryguard">DryGuard</vendor>
+    <vendor email="bobrowsse@gmail.com" url="https://github.com/bobrowsse-tech/dryguard">DryGuard</vendor>
     <description>
         <![CDATA[
         Catches structurally duplicate code — written by you or an AI coding

@@ -77,7 +77,7 @@ Two ways to wire this in, pick one:
 ```yaml
 # .pre-commit-config.yaml
 repos:
-  - repo: https://github.com/dryguard-dev/dryguard
+  - repo: https://github.com/bobrowsse-tech/dryguard
     rev: v0.1.0
     hooks:
       - id: dryguard

@@ -1,0 +1,6 @@
+src
+esbuild.config.mjs
+tsconfig.json
+node_modules
+**/*.map
+*.tsbuildinfo

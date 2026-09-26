@@ -43,7 +43,7 @@ jobs:
         run: pnpm build
 
       - name: Test
-        run: pnpm test -- --coverage
+        run: pnpm test
 
   package-vsix:
     name: Package VS Code extension (smoke test)
@@ -83,3 +83,16 @@ jobs:
       # being discovered by the first real user. Drop `|| true` once the
       # false-positive rate on this codebase has been tuned.
       - run: node packages/cli/dist/cli.js scan . --format markdown || true
+
+  ci-success:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [build-test, package-vsix, cli-self-scan]
+    if: always()
+    steps:
+      - name: Require every CI job
+        run: |
+          if [ "${{ needs.build-test.result }}" != "success" ] || [ "${{ needs.package-vsix.result }}" != "success" ] || [ "${{ needs.cli-self-scan.result }}" != "success" ]; then
+            echo "build-test=${{ needs.build-test.result }} package-vsix=${{ needs.package-vsix.result }} cli-self-scan=${{ needs.cli-self-scan.result }}"
+            exit 1
+          fi

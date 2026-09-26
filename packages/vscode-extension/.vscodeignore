@@ -1,0 +1,9 @@
+build/**
+src/**
+node_modules/**
+tsconfig.json
+esbuild.config.mjs
+**/*.map
+*.tsbuildinfo
+.gitignore
+.npmignore

@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "description": "DryGuard MCP server — lets AI coding agents (Claude Code, Cursor, Copilot Workspace, Roo Code, ...) check for duplicate code before writing it.",
   "license": "MIT",
+  "author": "Bob Rowsse Walakira",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobrowsse-tech/dryguard.git",
+    "directory": "packages/mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/bobrowsse-tech/dryguard/issues"
+  },
+  "homepage": "https://github.com/bobrowsse-tech/dryguard/tree/main/packages/mcp-server#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.12"
+  },
   "type": "module",
   "bin": {
     "dryguard-mcp": "./dist/cli.js"
@@ -14,7 +30,7 @@
     "build": "tsc -b",
     "dev": "tsc -b --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json --pretty false",
     "start": "node dist/cli.js",
     "test": "vitest run"
   },

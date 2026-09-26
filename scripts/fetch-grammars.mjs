@@ -5,6 +5,7 @@
 // sandbox this repo was scaffolded in did not, so it's never been run here.
 //
 // Usage: node scripts/fetch-grammars.mjs
+import { createRequire } from "node:module";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +13,8 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = join(here, "..", "packages", "core", "grammars");
 mkdirSync(outDir, { recursive: true });
+// Resolve from @dryguard/core. pnpm does not hoist this devDependency to the repo root.
+const require = createRequire(join(here, "..", "packages", "core", "package.json"));
 
 const GRAMMARS = {
   python: "tree-sitter-python.wasm",
@@ -20,9 +23,7 @@ const GRAMMARS = {
 
 let pkgDir;
 try {
-  pkgDir = dirname(
-    fileURLToPath(await import.meta.resolve("tree-sitter-wasms/package.json")),
-  );
+  pkgDir = dirname(require.resolve("tree-sitter-wasms/package.json"));
 } catch {
   console.error(
     "tree-sitter-wasms isn't installed. Add it first:\n" +

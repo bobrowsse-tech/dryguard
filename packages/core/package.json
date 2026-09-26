@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "description": "Structural duplicate-code detection engine for DryGuard (AST fingerprinting + similarity scoring).",
   "license": "MIT",
+  "author": "Bob Rowsse Walakira",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobrowsse-tech/dryguard.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/bobrowsse-tech/dryguard/issues"
+  },
+  "homepage": "https://github.com/bobrowsse-tech/dryguard/tree/main/packages/core#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.12"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,10 +30,10 @@
   },
   "files": ["dist", "grammars"],
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && node ../../scripts/fetch-grammars.mjs",
     "dev": "tsc -b --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json --pretty false",
     "test": "vitest run"
   },
   "dependencies": {

@@ -47,14 +47,15 @@ describe("WorkspaceIndex — semantic tier", () => {
       "users.ts": `
         export function loadActiveUsers(db: Database): User[] {
           const rows = db.query("SELECT * FROM users WHERE active = true");
-          return rows.map((row) => new User(row));
+          const mapped = rows.map((row) => new User(row));
+          return mapped;
         }
       `,
     });
 
     const { index } = await WorkspaceIndex.build({ rootDir: dir });
 
-    // Structurally different (reduce vs. map+filter), same underlying calls/names.
+    // Structurally different (for-loop vs map), same underlying calls/names.
     const result = index.checkSimilarity({
       code: `
         function fetchEnabledUsers(database: Database): User[] {

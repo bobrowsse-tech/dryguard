@@ -6,6 +6,16 @@
   "publisher": "dryguard-dev",
   "license": "MIT",
   "private": true,
+  "author": "Bob Rowsse Walakira",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bobrowsse-tech/dryguard.git",
+    "directory": "packages/vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/bobrowsse-tech/dryguard/issues"
+  },
+  "homepage": "https://github.com/bobrowsse-tech/dryguard/tree/main/packages/vscode-extension#readme",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -48,8 +58,8 @@
     "dev": "node esbuild.config.mjs --watch",
     "clean": "rm -rf dist *.vsix",
     "typecheck": "tsc --noEmit -p .",
-    "package": "vsce package --no-dependencies -o dryguard.vsix",
-    "publish:vscode": "vsce publish --no-dependencies",
+    "package": "node ../../scripts/package-vscode.mjs",
+    "publish:vscode": "vsce publish --packagePath dryguard.vsix",
     "publish:openvsx": "ovsx publish dryguard.vsix -p $OVSX_TOKEN"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import fg from "fast-glob";
@@ -343,9 +343,13 @@ function resolveConfigPath(rootDir: string, relativeOrAbsolute: string): string 
   return relativeOrAbsolute.startsWith("/") ? relativeOrAbsolute : join(rootDir, relativeOrAbsolute);
 }
 
-/** `<package root>/grammars`, resolved relative to this module regardless of where the package is installed. */
+/**
+ * Directory of grammar `.wasm` files. The published package keeps them at
+ * `<package root>/grammars` (two levels up from `dist/index`). The VS Code
+ * bundle keeps them next to `dist/server.mjs`.
+ */
 function packageGrammarsDir(): string {
   const here = dirname(fileURLToPath(import.meta.url));
-  // dist/index/workspaceIndex.js -> package root is two levels up.
-  return join(here, "..", "..", "grammars");
+  const candidates = [join(here, "grammars"), join(here, "..", "grammars"), join(here, "..", "..", "grammars")];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[candidates.length - 1]!;
 }

@@ -18,7 +18,7 @@ permissions:
   issues: write
 
 env:
-  ALLOWED_AUTHORS: "bobrowsse"
+  ALLOWED_AUTHORS: "bobrowsse-tech"
 
 jobs:
   gate:

@@ -62,12 +62,22 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         if: steps.changesets.outputs.published == 'true'
-        run: pnpm --filter dryguard-vscode publish:vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT is not set; skipping the VS Code Marketplace. Create publisher dryguard-dev and add the secret to publish."
+            exit 0
+          fi
+          pnpm --filter dryguard-vscode publish:vscode
 
       - name: Publish to Open VSX
         if: steps.changesets.outputs.published == 'true'
-        run: pnpm --filter dryguard-vscode publish:openvsx
         env:
           OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: |
+          if [ -z "$OVSX_TOKEN" ]; then
+            echo "OVSX_TOKEN is not set; skipping Open VSX. Create namespace dryguard-dev and add the secret to publish."
+            exit 0
+          fi
+          pnpm --filter dryguard-vscode publish:openvsx

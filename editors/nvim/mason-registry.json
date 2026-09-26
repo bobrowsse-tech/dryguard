@@ -2,7 +2,7 @@
   "_comment": "Draft mason-registry package entry — not yet submitted upstream. See README.md.",
   "name": "dryguard-lsp",
   "description": "DryGuard structural duplicate-code language server",
-  "homepage": "https://github.com/dryguard-dev/dryguard",
+  "homepage": "https://github.com/bobrowsse-tech/dryguard",
   "licenses": ["MIT"],
   "languages": ["TypeScript", "JavaScript", "Python", "Go"],
   "categories": ["LSP"],

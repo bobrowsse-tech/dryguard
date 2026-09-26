@@ -15,7 +15,7 @@
 #   ./scripts/setup-branch-protection.sh <owner>/<repo> [maintainer-login ...]
 #
 # Example:
-#   ./scripts/setup-branch-protection.sh dryguard-dev/dryguard bobrowsse
+#   ./scripts/setup-branch-protection.sh bobrowsse-tech/dryguard bobrowsse-tech
 
 set -euo pipefail
 
@@ -51,42 +51,47 @@ protect_branch() {
 
   echo "  - $branch: applying protection"
 
-  # required_status_checks: keep CI green before merge is allowed.
-  # enforce_admins: true means even repo admins (i.e. us) can't bypass this
-  #   by pushing directly or force-merging — everything really does go
-  #   through a PR.
-  # required_pull_request_reviews: at least 1 approval, dismiss stale
-  #   approvals on new commits, and restrict who can even *push* (which for
-  #   a protected branch means who can merge a PR into it / open PRs that
-  #   target it in the restricted sense GitHub supports).
-  # restrictions: only the listed users (or teams) may push to the branch
-  #   directly. Note this restricts *direct pushes*, not who may open a PR
-  #   (GitHub has no such toggle for public repos — anyone can fork and PR).
-  #   The .github/workflows/restrict-pr-authors.yml workflow is what
-  #   actually enforces "only we may open PRs", by auto-closing anyone
-  #   else's. Together: nobody but the allow-listed maintainer(s) can get
-  #   code into main, whether by pushing directly or via a PR.
-  # allow_deletions: false — the branch (and therefore the repo's history
-  #   on it) can never be deleted via the API or UI while protection is on.
-  # allow_force_pushes: false — history on the branch can't be rewritten.
-  gh api \
-    --method PUT \
-    -H "Accept: application/vnd.github+json" \
-    "repos/$REPO/branches/$branch/protection" \
-    -f "required_status_checks[strict]=true" \
-    -f "required_status_checks[contexts][]=Build, lint, typecheck, test" \
-    -F "enforce_admins=true" \
-    -F "required_pull_request_reviews[required_approving_review_count]=1" \
-    -F "required_pull_request_reviews[dismiss_stale_reviews]=true" \
-    -F "required_conversation_resolution=true" \
+  # required_status_checks: the aggregate "CI" job in ci.yml. Requiring the
+  #   matrix job name would never go green, because GitHub reports each
+  #   Node version as its own check.
+  # enforce_admins: true means even repo admins can't bypass this by pushing
+  #   directly — everything goes through a PR.
+  # required_approving_review_count: 0. A pull request is still required,
+  #   but a solo maintainer cannot approve their own PR, so requiring 1
+  #   approval would make main unmergeable. Raise this when a second
+  #   maintainer exists.
+  # restrictions: only the listed users may push directly. GitHub only
+  #   allows this field on organization repositories. Personal repos get
+  #   the same protection without it; restrict-pr-authors.yml still
+  #   auto-closes pull requests from anyone else.
+  # allow_deletions / allow_force_pushes: false — main cannot be deleted
+  #   or rewritten while protection is on.
+  local common=(
+    --method PUT
+    -H "Accept: application/vnd.github+json"
+    "repos/$REPO/branches/$branch/protection"
+    -f "required_status_checks[strict]=true"
+    -f "required_status_checks[contexts][]=CI"
+    -F "enforce_admins=true"
+    -F "required_pull_request_reviews[required_approving_review_count]=0"
+    -F "required_pull_request_reviews[dismiss_stale_reviews]=true"
+    -F "required_conversation_resolution=true"
+    -F "allow_deletions=false"
+    -F "allow_force_pushes=false"
+    -F "block_creations=false"
+    -F "lock_branch=false"
+  )
+
+  if gh api "${common[@]}" \
     -F "restrictions[users][]=${MAINTAINERS[0]}" \
     $(for m in "${MAINTAINERS[@]:1}"; do printf -- '-F restrictions[users][]=%s ' "$m"; done) \
     -F "restrictions[teams]=[]" \
-    -F "restrictions[apps]=[]" \
-    -F "allow_deletions=false" \
-    -F "allow_force_pushes=false" \
-    -F "block_creations=false" \
-    -F "lock_branch=false"
+    -F "restrictions[apps]=[]" >/dev/null; then
+    return
+  fi
+
+  echo "  - $branch: push restrictions are unavailable here; protecting without them"
+  gh api "${common[@]}" >/dev/null
 }
 
 protect_branch "main"

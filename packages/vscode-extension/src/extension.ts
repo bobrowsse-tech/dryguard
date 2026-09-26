@@ -6,15 +6,19 @@ import {
   ServerOptions,
   TransportKind,
 } from "vscode-languageclient/node.js";
-import { REFACTOR_COMMAND } from "@dryguard/lsp-server";
 import { runAiAssistedMerge } from "./refactor.js";
+
+/**
+ * Must stay identical to `REFACTOR_COMMAND` in `@dryguard/lsp-server`.
+ * Imported as a literal so the extension host bundle does not inline the
+ * language server; the server runs as its own Node process.
+ */
+const REFACTOR_COMMAND = "dryguard.refactorDuplicate";
 
 let client: LanguageClient | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const serverModule = context.asAbsolutePath(
-    path.join("node_modules", "@dryguard", "lsp-server", "dist", "cli.js"),
-  );
+  const serverModule = context.asAbsolutePath(path.join("dist", "server.mjs"));
 
   const serverOptions: ServerOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },

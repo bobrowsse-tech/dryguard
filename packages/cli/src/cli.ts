@@ -31,7 +31,7 @@ program
       format: opts.format,
       maxDuplicates: opts.maxDuplicates,
     });
-    console.log(output);
+    process.stdout.write(`${output}\n`);
     process.exitCode = exitCode;
   });
 
@@ -43,7 +43,7 @@ program
   .option("--semantic", "also baseline the looser semantic tier")
   .action(async (rootDir, opts) => {
     const { output } = await runBaseline({ rootDir, threshold: opts.threshold, semantic: opts.semantic });
-    console.log(output);
+    process.stdout.write(`${output}\n`);
   });
 
 program
@@ -60,7 +60,7 @@ program
       threshold: opts.threshold,
       semantic: opts.semantic,
     });
-    console.log(output);
+    process.stdout.write(`${output}\n`);
     process.exitCode = exitCode;
   });
 
@@ -76,7 +76,7 @@ program
       return;
     }
     writeFileSync(path, configTemplate(), "utf8");
-    console.log(`Wrote ${path}`);
+    process.stdout.write(`Wrote ${path}\n`);
   });
 
 program.parseAsync(process.argv);

@@ -17,25 +17,24 @@ is a point-in-time snapshot of the design rationale and status from when
 this was scaffolded — read it for background, but treat *this* file as the
 current source of truth on what's verified vs. not.
 
-## Known state as of this handoff
+## Known state
 
-- Code is fully scaffolded and committed to git (`main` branch).
-- **Nothing has been installed, built, or tested yet.** The sandbox this was
-  written in had no network access to `registry.npmjs.org` (org policy
-  blocked it, confirmed via direct `curl` → `403 Host not in allowlist`), so
-  `pnpm install`, `pnpm build`, and `pnpm test` have never actually been run
-  against this code. Treat every package as "should work" rather than
-  "verified" until you've run the steps below and they pass.
-- No GitHub remote is configured (`git remote -v` is empty). No repo has
-  been created on GitHub yet either.
-- The Python/Go tree-sitter adapters (`packages/core/src/lang/treeSitterAdapter.ts`)
-  need grammar `.wasm` files that were never fetched here (also a network
-  dependency) — see step 4 below. Until fetched, `.py`/`.go` indexing will
-  throw a clear "missing grammar" error rather than silently doing nothing;
-  TS/JS is unaffected.
-- The JetBrains plugin (`packages/jetbrains-plugin`) is a Gradle/Kotlin
-  project, outside the pnpm workspace and never built (`./gradlew` has
-  never run here) — see its own README.
+- Installed, typechecked, linted, built, and tested (`pnpm lint`,
+  `pnpm typecheck`, `pnpm build`, `pnpm test`). Python and Go grammars are
+  fetched during `pnpm build` / `pnpm pretest` from `tree-sitter-wasms`
+  into `packages/core/grammars/` (those `.wasm` files stay gitignored and
+  are copied into the npm package and the VSIX at pack time).
+- Public GitHub repo: `bobrowsse-tech/dryguard`. The maintainer login in
+  `.github/CODEOWNERS` and `restrict-pr-authors.yml` is `bobrowsse-tech`.
+- npm is not logged in on a fresh machine, and the repository secrets
+  `NPM_TOKEN`, `VSCE_PAT`, and `OVSX_TOKEN` are still required before
+  `release.yml` can publish. `@dryguard/core` is not on npm yet. The VS
+  Code / Open VSX publisher id in the extension manifest is `dryguard-dev`;
+  that publisher and namespace have to be created in those marketplaces
+  before the first extension publish.
+- The JetBrains plugin (`packages/jetbrains-plugin`) is still a Gradle/Kotlin
+  project outside the pnpm workspace. This tree has no Gradle wrapper, so
+  `./gradlew` cannot run until a wrapper or a local Gradle install is added.
 
 ## First-time setup on macOS
 
@@ -55,8 +54,7 @@ pnpm lint
 pnpm build       # compiles core -> mcp-server/lsp-server/cli (which depend on it) -> vscode-extension bundles with esbuild
 pnpm test        # vitest; packages/core has the only tests so far — extend this
 
-# 4. Optional: Python/Go support (needs network; skip to keep TS/JS-only for now)
-pnpm add -D tree-sitter-wasms --filter @dryguard/core
+# 4. Python/Go grammars (also run automatically by `pnpm build` and `pnpm pretest`)
 node scripts/fetch-grammars.mjs
 ```
 
@@ -81,14 +79,10 @@ config file's values should override defaults).
 
 ## Things intentionally left for you to finish
 
-- **Push to GitHub.** No remote exists yet. Create `dryguard-dev/dryguard` (or wherever the user wants it) as a **public** repo, `git remote add origin <url>`, push `main`. Confirm with the user before creating anything under an org rather than their personal account.
-- **Run `scripts/setup-branch-protection.sh <owner>/<repo> <maintainer-github-login>`** immediately after the first push, before advertising the repo anywhere. It requires `gh auth login` first. This is what makes `main` PR-only, un-deletable, and admin-can't-bypass, and closes the loop with `.github/workflows/restrict-pr-authors.yml` (update the `ALLOWED_AUTHORS` env var in that workflow and `.github/CODEOWNERS`'s `@bobrowsse` line if the maintainer's GitHub login differs).
-- **Add repository secrets** before the `release.yml` workflow can actually publish anything: `NPM_TOKEN` (npm automation token with publish rights for the `@dryguard` scope), `VSCE_PAT` (Azure DevOps PAT for the VS Code Marketplace publisher `dryguard-dev`), `OVSX_TOKEN` (Open VSX access token, same publisher namespace).
-- **Reserve the npm scope and marketplace publisher name** (`@dryguard` on npm, `dryguard-dev` on VS Code Marketplace / Open VSX) if not already done — first publish will fail otherwise.
-- **Expand test coverage.** `mcp-server`, `lsp-server`, `cli`, and the tree-sitter adapter have no tests yet — `packages/core`'s AST/config/baseline/semantic paths do. Add at least one integration test per package before the first real release.
-- **Fetch tree-sitter grammars and validate Python/Go detection** against real code, per step 4 above — this has never been exercised end-to-end.
-- **Build and manually test the JetBrains plugin** (`cd packages/jetbrains-plugin && ./gradlew runIde`) — this Kotlin has never compiled.
-- **Try the extension against a real duplicate** in a non-trivial codebase (not just the toy fixtures) and tune `threshold`/`semanticTier` in `.dryguardrc.json` if it's too noisy or too lax.
+- **Add repository secrets** before `release.yml` can publish: `NPM_TOKEN` (npm automation token with publish rights for the `@dryguard` scope), `VSCE_PAT` (Azure DevOps PAT for the VS Code Marketplace publisher `dryguard-dev`), `OVSX_TOKEN` (Open VSX access token, same publisher namespace). Without `NPM_TOKEN`, the publish script skips npm and the workflow stays green.
+- **Reserve the npm scope and marketplace publisher name** (`@dryguard` on npm, `dryguard-dev` on VS Code Marketplace / Open VSX) if not already done — first publish will fail otherwise. Packages are already at `0.1.0` and have never been published; do not add a changeset just to re-bump that first version.
+- **Build and manually test the JetBrains plugin** once Gradle is available (`cd packages/jetbrains-plugin && ./gradlew runIde`). There is no wrapper in the tree yet.
+- **Try the extension against a real duplicate** in a non-trivial codebase (not just the fixtures) and tune `threshold`/`semanticTier` in `.dryguardrc.json` if it's too noisy or too lax.
 - **Submit the Neovim config to `mason-registry`** (`editors/nvim/mason-registry.json` is a draft) once `@dryguard/lsp-server` is actually published to npm — that registry requires the package to exist first.
 
 ## Ground rules for whoever (human or agent) works on this next

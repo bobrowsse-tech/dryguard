@@ -3,6 +3,22 @@
   "version": "0.1.0",
   "description": "DryGuard Language Server — one implementation of DRY-violation diagnostics and quick fixes for every LSP-capable editor (VS Code, Neovim, JetBrains via LSP4IJ, Sublime, Helix, Emacs, ...).",
   "license": "MIT",
+  "author": "Bob Rowsse Walakira",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bobrowsse-tech/dryguard.git",
+    "directory": "packages/lsp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/bobrowsse-tech/dryguard/issues"
+  },
+  "homepage": "https://github.com/bobrowsse-tech/dryguard/tree/main/packages/lsp-server#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.12"
+  },
   "type": "module",
   "bin": {
     "dryguard-lsp": "./dist/cli.js"
@@ -14,7 +30,7 @@
     "build": "tsc -b",
     "dev": "tsc -b --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json --pretty false",
     "test": "vitest run"
   },
   "dependencies": {
