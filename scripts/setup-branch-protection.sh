@@ -36,9 +36,6 @@ fi
 echo "Configuring branch protection on $REPO for branches: main, master (if present)"
 echo "Restricting who can push/merge to: ${MAINTAINERS[*]}"
 
-# Build the `restrictions.users` JSON array from MAINTAINERS.
-users_json=$(printf '%s\n' "${MAINTAINERS[@]}" | jq -R . | jq -s .)
-
 protect_branch() {
   local branch="$1"
 
@@ -66,32 +63,41 @@ protect_branch() {
   #   auto-closes pull requests from anyone else.
   # allow_deletions / allow_force_pushes: false — main cannot be deleted
   #   or rewritten while protection is on.
-  local common=(
-    --method PUT
-    -H "Accept: application/vnd.github+json"
-    "repos/$REPO/branches/$branch/protection"
-    -f "required_status_checks[strict]=true"
-    -f "required_status_checks[contexts][]=CI"
-    -F "enforce_admins=true"
-    -F "required_pull_request_reviews[required_approving_review_count]=0"
-    -F "required_pull_request_reviews[dismiss_stale_reviews]=true"
-    -F "required_conversation_resolution=true"
-    -F "allow_deletions=false"
-    -F "allow_force_pushes=false"
-    -F "block_creations=false"
-    -F "lock_branch=false"
-  )
+  # gh's -f/-F form sends some of these values as strings. The protection
+  # API rejects that, so the body is JSON.
+  local users_json payload
+  users_json=$(printf '%s\n' "${MAINTAINERS[@]}" | jq -R . | jq -s .)
+  payload=$(jq -n \
+    --argjson users "$users_json" \
+    '{
+      required_status_checks: { strict: true, contexts: ["CI"] },
+      enforce_admins: true,
+      required_pull_request_reviews: {
+        required_approving_review_count: 0,
+        dismiss_stale_reviews: true
+      },
+      required_conversation_resolution: true,
+      restrictions: { users: $users, teams: [], apps: [] },
+      allow_deletions: false,
+      allow_force_pushes: false,
+      block_creations: false,
+      lock_branch: false
+    }')
 
-  if gh api "${common[@]}" \
-    -F "restrictions[users][]=${MAINTAINERS[0]}" \
-    $(for m in "${MAINTAINERS[@]:1}"; do printf -- '-F restrictions[users][]=%s ' "$m"; done) \
-    -F "restrictions[teams]=[]" \
-    -F "restrictions[apps]=[]" >/dev/null; then
+  if echo "$payload" | gh api \
+    --method PUT \
+    -H "Accept: application/vnd.github+json" \
+    "repos/$REPO/branches/$branch/protection" \
+    --input - >/dev/null; then
     return
   fi
 
   echo "  - $branch: push restrictions are unavailable here; protecting without them"
-  gh api "${common[@]}" >/dev/null
+  echo "$payload" | jq 'del(.restrictions)' | gh api \
+    --method PUT \
+    -H "Accept: application/vnd.github+json" \
+    "repos/$REPO/branches/$branch/protection" \
+    --input - >/dev/null
 }
 
 protect_branch "main"
@@ -106,7 +112,7 @@ echo "Also locking the repo-level 'delete branch/repo' surface:"
 # collaborator permission level, which is managed via
 # `gh api repos/$REPO/collaborators` — see README for adding contributors
 # with write-but-not-admin access).
-gh api "repos/$REPO" -f delete_branch_on_merge=true >/dev/null
+gh api "repos/$REPO" -F delete_branch_on_merge=true >/dev/null
 
 echo "Done. $REPO: main/master cannot be deleted or force-pushed, and only" \
      "${MAINTAINERS[*]} can merge — everyone else must go through a reviewed PR from a fork."
