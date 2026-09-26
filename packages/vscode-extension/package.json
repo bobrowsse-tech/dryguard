@@ -1,0 +1,66 @@
+{
+  "name": "dryguard-vscode",
+  "displayName": "DryGuard — DRY Enforcement for AI Coding Agents",
+  "description": "Catches structurally duplicate code — written by you or your AI agent — before it lands, and offers an AI-assisted merge.",
+  "version": "0.1.0",
+  "publisher": "dryguard-dev",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Linters", "AI", "Programming Languages"],
+  "keywords": ["dry", "duplicate code", "refactoring", "ai agent", "code quality"],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "DryGuard",
+      "properties": {
+        "dryguard.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable DryGuard duplicate-code diagnostics."
+        },
+        "dryguard.threshold": {
+          "type": "number",
+          "default": 0.85,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Structural similarity score (0-1) above which two functions are flagged as duplicates."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "dryguard.reindexWorkspace",
+        "title": "DryGuard: Re-index Workspace"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch",
+    "clean": "rm -rf dist *.vsix",
+    "typecheck": "tsc --noEmit -p .",
+    "package": "vsce package --no-dependencies -o dryguard.vsix",
+    "publish:vscode": "vsce publish --no-dependencies",
+    "publish:openvsx": "ovsx publish dryguard.vsix -p $OVSX_TOKEN"
+  },
+  "dependencies": {
+    "@dryguard/lsp-server": "workspace:*",
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.2",
+    "ovsx": "^0.10.1",
+    "typescript": "^5.7.2"
+  }
+}

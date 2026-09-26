@@ -1,0 +1,30 @@
+{
+  "name": "@dryguard/lsp-server",
+  "version": "0.1.0",
+  "description": "DryGuard Language Server — one implementation of DRY-violation diagnostics and quick fixes for every LSP-capable editor (VS Code, Neovim, JetBrains via LSP4IJ, Sublime, Helix, Emacs, ...).",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "dryguard-lsp": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dryguard/core": "workspace:*",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "vscode-uri": "^3.0.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

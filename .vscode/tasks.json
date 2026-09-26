@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dryguard: build extension",
+      "type": "shell",
+      "command": "pnpm --filter @dryguard/core --filter @dryguard/lsp-server --filter dryguard-vscode build",
+      "problemMatcher": []
+    }
+  ]
+}
