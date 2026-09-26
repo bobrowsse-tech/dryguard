@@ -14,6 +14,20 @@ import type { ExtractedUnit, LanguageAdapter } from "./types.js";
  * TS/JS path. Extend `FUNCTION_NODE_TYPES` / `STRUCTURAL_NODE_TYPES` per
  * grammar as coverage grows.
  */
+// web-tree-sitter shares one emscripten module. Loading two grammars at
+// once leaves exports such as `tree_sitter_python_external_scanner_create`
+// unresolved on Node 18 and 20.
+let grammarLoadQueue: Promise<void> = Promise.resolve();
+
+function loadGrammarExclusively<T>(load: () => Promise<T>): Promise<T> {
+  const result = grammarLoadQueue.then(load, load);
+  grammarLoadQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
 export class TreeSitterAdapter implements LanguageAdapter {
   private parser: Parser | undefined;
   private initPromise: Promise<void> | undefined;
@@ -27,7 +41,7 @@ export class TreeSitterAdapter implements LanguageAdapter {
   private async ensureReady(): Promise<Parser> {
     if (this.parser) return this.parser;
     if (!this.initPromise) {
-      this.initPromise = (async () => {
+      this.initPromise = loadGrammarExclusively(async () => {
         await Parser.init();
         const parser = new Parser();
         if (!existsSync(this.wasmPath)) {
@@ -39,7 +53,7 @@ export class TreeSitterAdapter implements LanguageAdapter {
         const lang = await Parser.Language.load(this.wasmPath);
         parser.setLanguage(lang);
         this.parser = parser;
-      })();
+      });
     }
     await this.initPromise;
     return this.parser!;
