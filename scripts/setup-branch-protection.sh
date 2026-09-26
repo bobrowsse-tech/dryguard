@@ -93,7 +93,7 @@ protect_branch() {
   fi
 
   echo "  - $branch: push restrictions are unavailable here; protecting without them"
-  echo "$payload" | jq 'del(.restrictions)' | gh api \
+  echo "$payload" | jq '.restrictions = null' | gh api \
     --method PUT \
     -H "Accept: application/vnd.github+json" \
     "repos/$REPO/branches/$branch/protection" \
