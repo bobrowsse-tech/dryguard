@@ -12,7 +12,10 @@ extension, a JetBrains plugin scaffold, and a headless CLI — plus Neovim
 config under `editors/nvim`. Full architecture:
 [`CONTRIBUTING.md`](./CONTRIBUTING.md#architecture). Full concept/design
 rationale and per-surface usage: [`README.md`](./README.md) and
-[`docs/HOW_TO_USE.md`](./docs/HOW_TO_USE.md).
+[`docs/HOW_TO_USE.md`](./docs/HOW_TO_USE.md). [`docs/PROJECT_STATUS.md`](./docs/PROJECT_STATUS.md)
+is a point-in-time snapshot of the design rationale and status from when
+this was scaffolded — read it for background, but treat *this* file as the
+current source of truth on what's verified vs. not.
 
 ## Known state as of this handoff
 
