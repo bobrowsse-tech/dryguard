@@ -1,91 +1,96 @@
 # DryGuard
 
+[![CI](https://github.com/dryguard-dev/dryguard/actions/workflows/ci.yml/badge.svg)](https://github.com/dryguard-dev/dryguard/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/%40dryguard%2Fcore)](https://www.npmjs.com/package/@dryguard/core)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 DryGuard stops AI coding agents (and humans) from writing duplicate code. It
 parses new functions into a structural AST fingerprint, compares them against
 everything already in your workspace, and blocks the duplicate before it ever
-lands — as an editor diagnostic, and as an MCP tool an agent can call before
-it writes a single line.
+lands — as an editor diagnostic, as an MCP tool an agent can call before it
+writes a single line, and as a CI gate.
 
 ```
-"DRY violation: this looks 92% structurally identical to `calculateTax`
+DRY violation: this looks 92% structurally identical to `calculateTax`
 in src/billing.ts:14. Reuse or extract a shared helper instead of
-duplicating it."
+duplicating it.
 ```
+
+**📖 [Full usage guide](./docs/HOW_TO_USE.md)** — configuration, CI, pre-commit hooks, adopting it on an existing codebase, per-editor setup.
 
 ## Why
 
 Agentic coding tools default to regenerating logic that already exists in
 your codebase rather than doing the harder work of finding and reusing it.
-DryGuard makes that impossible to ignore, for both agents and people.
+DryGuard makes that impossible to ignore, for both agents and people —
+before the code is written, not after, in a lint pass nobody reads.
 
 ## How it works
 
-One similarity engine, three surfaces:
+One similarity engine, reused across every surface, so adding a new IDE
+never means re-implementing detection:
 
 | Package | What it is | Who uses it |
 |---|---|---|
-| [`@dryguard/core`](./packages/core) | AST fingerprinting + structural similarity scoring | the other two packages |
-| [`@dryguard/mcp-server`](./packages/mcp-server) | An MCP server exposing `index_workspace`, `check_similarity`, `get_refactor_suggestion` | AI agents — Claude Code, Cursor, Copilot Workspace, Roo Code, or anything else that speaks MCP |
-| [`@dryguard/lsp-server`](./packages/lsp-server) | A standard Language Server (diagnostics + code actions) | every LSP-capable editor — VS Code, Neovim, Helix, Sublime, Emacs, JetBrains via [LSP4IJ](https://github.com/redhat-developer/vscode-java) |
-| [`dryguard-vscode`](./packages/vscode-extension) | Thin VS Code client that launches the LSP server and wires up an AI-assisted "merge this duplicate" quick fix using `vscode.lm` | VS Code / Cursor / Windsurf users |
+| [`@dryguard/core`](./packages/core) | AST fingerprinting (TS/JS via `ts-morph`, Python/Go via tree-sitter) + structural & semantic similarity scoring, config, caching, baselines | the packages below |
+| [`@dryguard/mcp-server`](./packages/mcp-server) | MCP server: `index_workspace` (with an auto-refreshing file watcher), `check_similarity`, `get_refactor_suggestion` | AI agents — Claude Code, Cursor, Copilot Workspace, Roo Code, or anything else that speaks MCP |
+| [`@dryguard/lsp-server`](./packages/lsp-server) | A standard Language Server (diagnostics + code actions) | every LSP-capable editor — VS Code, Neovim, Sublime, Helix, Emacs, JetBrains via [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij) |
+| [`dryguard-vscode`](./packages/vscode-extension) | Thin VS Code client: launches the LSP server, adds an AI-assisted "merge this duplicate" quick fix using `vscode.lm` | VS Code / Cursor / Windsurf users |
+| [`packages/jetbrains-plugin`](./packages/jetbrains-plugin) | Thin JetBrains plugin registering `@dryguard/lsp-server` via LSP4IJ | IntelliJ IDEA, PyCharm, GoLand, WebStorm, ... |
+| [`@dryguard/cli`](./packages/cli) | Headless `dryguard scan` / `dryguard baseline` / `dryguard precommit` | CI pipelines, pre-commit hooks |
+| [`editors/nvim`](./editors/nvim) | `nvim-lspconfig` config + draft `mason.nvim` registry entry | Neovim users |
 
-Because the detection logic lives once in `@dryguard/core` and is reused by
-both the MCP server and the LSP server, DryGuard works the same way whether
-it's an agent calling a tool or a human seeing a squiggly line — and adding
-a new IDE only means writing a thin LSP client, not re-implementing detection.
+## Quick start
 
-## Using it
+```bash
+# AI agent (MCP) — see docs/HOW_TO_USE.md for the config snippet
+npx -y @dryguard/mcp-server
 
-### As an AI agent (MCP)
+# VS Code — install "DryGuard" from the Marketplace or Open VSX
 
-```json
-{
-  "mcpServers": {
-    "dryguard": {
-      "command": "npx",
-      "args": ["-y", "@dryguard/mcp-server"]
-    }
-  }
-}
+# CI / pre-commit
+npx @dryguard/cli scan .
+npx @dryguard/cli baseline .   # first run on an existing codebase — see docs
 ```
 
-Then, at the start of a session: call `index_workspace` with the project
-root once, and `check_similarity` before writing any new function.
+See **[docs/HOW_TO_USE.md](./docs/HOW_TO_USE.md)** for the rest: configuration
+(`.dryguardrc.json`), the semantic similarity tier, `// dryguard-ignore`,
+pre-commit hooks, and per-editor setup for Neovim/JetBrains/others.
 
-### As a human, in VS Code
+## Nice-to-haves already built in
 
-Install "DryGuard" from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=dryguard-dev.dryguard-vscode)
-or [Open VSX](https://open-vsx.org/extension/dryguard-dev/dryguard-vscode) (for
-VSCodium, Cursor, Windsurf, Gitpod, Theia, ...). It activates automatically
-for JS/TS projects.
-
-### In any other LSP-capable editor
-
-Run `npx @dryguard/lsp-server` as the language server command for
-JS/TS files. See your editor's docs for how to register a custom language
-server (Neovim: `nvim-lspconfig`; JetBrains: the LSP4IJ plugin; Helix:
-`languages.toml`).
+- **Baseline/allowlist** — adopt DryGuard on a large existing codebase without drowning in pre-existing duplicates; only new duplication is flagged.
+- **Inline suppression** (`// dryguard-ignore`) for deliberate, accepted look-alikes.
+- **Opt-in semantic tier** — catches functions that do the same thing via a different structural shape (heuristic identifier/API overlap, no model download required).
+- **Multi-language**: TypeScript/JavaScript (full precision), Python and Go (via tree-sitter).
+- **Headless CLI** (`dryguard scan`) for CI duplication gating, independent of any IDE.
+- **Persistent incremental cache** — re-indexing a large repo only re-parses what changed.
+- **Pre-commit hook** (both the `pre-commit` framework and a plain git-hook script).
+- **JetBrains plugin scaffold** and **Neovim (`nvim-lspconfig`) packaging**.
+- **Auto-refreshing MCP index** — a file watcher keeps the index current through a long agent session without manual re-indexing.
 
 ## Configuration
 
+See the full table in [docs/HOW_TO_USE.md#configuration](./docs/HOW_TO_USE.md#configuration). The essentials:
+
 | Setting | Default | Meaning |
 |---|---|---|
-| `dryguard.enable` | `true` | Turn diagnostics on/off |
-| `dryguard.threshold` | `0.85` | Structural similarity score (0–1) required to flag a duplicate |
+| `dryguard.enable` (editor) / `enable` | `true` | Turn diagnostics on/off |
+| `dryguard.threshold` / `threshold` | `0.85` | Structural similarity score (0–1) required to flag a duplicate |
+| `semanticTier.enabled` | `false` | Also run the looser semantic tier |
 
 ## Development
 
-This is a pnpm workspace monorepo.
+This is a pnpm workspace monorepo. See **[AGENTS.md](./AGENTS.md)** for full
+setup/build instructions (written for whoever — human or agent — picks this
+up on a fresh machine) and **[CONTRIBUTING.md](./CONTRIBUTING.md)** for
+architecture details and this repo's contribution policy.
 
 ```bash
 pnpm install
 pnpm build
 pnpm test
 ```
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the architecture in more depth,
-the release process, and this repo's (deliberately strict) contribution
-policy.
 
 ## License
 

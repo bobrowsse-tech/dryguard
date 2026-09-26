@@ -5,10 +5,18 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { WorkspaceIndex } from "@dryguard/core";
+import chokidar, { type FSWatcher } from "chokidar";
 import { z } from "zod";
 
 const IndexWorkspaceInput = z.object({
   rootDir: z.string().describe("Absolute path to the project/workspace root to index."),
+  watch: z
+    .boolean()
+    .optional()
+    .describe(
+      "Keep the index fresh automatically by watching the workspace for file changes, " +
+        "instead of requiring another index_workspace call after every edit. Default true.",
+    ),
 });
 
 const CheckSimilarityInput = z.object({
@@ -24,7 +32,12 @@ const CheckSimilarityInput = z.object({
     .min(0)
     .max(1)
     .optional()
-    .describe("Similarity threshold (0-1) above which a match counts as a duplicate. Default 0.85."),
+    .describe("Similarity threshold (0-1) above which a match counts as a duplicate. Default from .dryguardrc.json, else 0.85."),
+  semantic: z
+    .boolean()
+    .optional()
+    .describe("Also run the looser semantic (identifier/API overlap) tier, which catches same-behavior-different-shape duplicates at the cost of more false positives. Default from config, else off."),
+  semanticThreshold: z.number().min(0).max(1).optional(),
   limit: z.number().int().positive().optional().describe("Max matches to return. Default 5."),
 });
 
@@ -36,8 +49,10 @@ const GetRefactorSuggestionInput = z.object({
 /**
  * Builds the DryGuard MCP server. One index is held per server process,
  * scoped to whichever workspace the client asks to index first — an agent
- * calls `index_workspace` once at session start, then `check_similarity`
- * before writing each new function.
+ * calls `index_workspace` once at session start (which also starts a file
+ * watcher by default, so a long agentic session doesn't drift out of date
+ * as it writes files), then `check_similarity` before writing each new
+ * function.
  */
 export function createDryGuardServer(): Server {
   const server = new Server(
@@ -46,19 +61,31 @@ export function createDryGuardServer(): Server {
   );
 
   let index: WorkspaceIndex | undefined;
-  let indexedRoot: string | undefined;
+  let watcher: FSWatcher | undefined;
+
+  function startWatching(rootDir: string, currentIndex: WorkspaceIndex): FSWatcher {
+    const w = chokidar.watch(rootDir, {
+      ignored: [/node_modules/, /\.git/, /dist/, /\.dryguard/],
+      ignoreInitial: true,
+    });
+    w.on("add", (path) => currentIndex.indexFile(path));
+    w.on("change", (path) => currentIndex.indexFile(path));
+    w.on("unlink", (path) => currentIndex.removeFile(path));
+    return w;
+  }
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
       {
         name: "index_workspace",
         description:
-          "Builds (or rebuilds) DryGuard's structural code index for a workspace. " +
-          "Call this once before the first check_similarity call in a session, " +
-          "or again after large-scale changes (branch switch, generated code, etc).",
+          "Builds (or rebuilds) DryGuard's structural code index for a workspace, and by default " +
+          "starts watching it so the index stays current as files are added/changed/removed — " +
+          "call this once per session; you should not need to call it again just because you wrote " +
+          "more files. Pass watch:false to disable that and manage freshness yourself.",
         inputSchema: {
           type: "object",
-          properties: { rootDir: { type: "string" } },
+          properties: { rootDir: { type: "string" }, watch: { type: "boolean" } },
           required: ["rootDir"],
         },
       },
@@ -75,6 +102,8 @@ export function createDryGuardServer(): Server {
             code: { type: "string" },
             filePath: { type: "string" },
             threshold: { type: "number" },
+            semantic: { type: "boolean" },
+            semanticThreshold: { type: "number" },
             limit: { type: "number" },
           },
           required: ["code"],
@@ -105,14 +134,21 @@ export function createDryGuardServer(): Server {
     switch (name) {
       case "index_workspace": {
         const input = IndexWorkspaceInput.parse(args);
+        await watcher?.close();
         const built = await WorkspaceIndex.build({ rootDir: input.rootDir });
         index = built.index;
-        indexedRoot = input.rootDir;
+        if (input.watch ?? true) {
+          watcher = startWatching(input.rootDir, index);
+        }
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ rootDir: input.rootDir, ...built.stats }),
+              text: JSON.stringify({
+                rootDir: input.rootDir,
+                watching: input.watch ?? true,
+                ...built.stats,
+              }),
             },
           ],
         };
@@ -135,6 +171,7 @@ export function createDryGuardServer(): Server {
                   isDuplicate: result.isDuplicate,
                   threshold: result.threshold,
                   matches: result.matches.map((m) => ({
+                    matchType: m.matchType,
                     score: Math.round(m.score * 100) / 100,
                     name: m.unit.name,
                     filePath: m.unit.filePath,

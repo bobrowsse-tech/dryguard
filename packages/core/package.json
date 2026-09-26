@@ -12,7 +12,7 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "grammars"],
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch",
@@ -22,9 +22,11 @@
   },
   "dependencies": {
     "ts-morph": "^24.0.0",
-    "fast-glob": "^3.3.2"
+    "fast-glob": "^3.3.2",
+    "web-tree-sitter": "^0.24.4"
   },
   "devDependencies": {
+    "tree-sitter-wasms": "^0.1.11",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }

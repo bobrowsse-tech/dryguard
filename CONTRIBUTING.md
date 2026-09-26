@@ -30,17 +30,30 @@ for exactly what's configured and why, line by line.
 
 ```
 packages/
-  core/              structural AST fingerprinting + similarity scoring (no I/O beyond reading files)
-  mcp-server/         @dryguard/core exposed as MCP tools, for AI agents
-  lsp-server/          @dryguard/core exposed as an LSP (diagnostics + code actions), for editors
-  vscode-extension/    thin client: launches lsp-server, adds the vscode.lm-powered "merge" quick fix
+  core/               structural AST fingerprinting (ts-morph + tree-sitter) + structural/semantic
+                       similarity scoring + config/baseline/cache — no I/O beyond reading files
+  mcp-server/          @dryguard/core exposed as MCP tools, for AI agents (with a file watcher
+                       keeping the index fresh through a long session)
+  lsp-server/           @dryguard/core exposed as an LSP (diagnostics + code actions), for editors
+  vscode-extension/     thin client: launches lsp-server, adds the vscode.lm-powered "merge" quick fix
+  jetbrains-plugin/     thin client: registers lsp-server with the IDE via the LSP4IJ plugin
+  cli/                 headless @dryguard/core: `dryguard scan`/`baseline`/`precommit`, for CI and git hooks
+editors/
+  nvim/                 nvim-lspconfig config + draft mason.nvim registry entry (no plugin needed)
 ```
 
-`core` has no dependency on either the MCP SDK or any LSP library — that
-separation is what keeps a single detection implementation reusable across
-every IDE and every agent. If you're adding support for a new editor, you
-almost certainly want to write a new thin client against `@dryguard/lsp-server`
-(most editors speak LSP natively), not touch `core`.
+`core` has no dependency on the MCP SDK, any LSP library, or a specific
+editor's plugin API — that separation is what keeps a single detection
+implementation reusable across every IDE and every agent. Within `core`
+itself, language-specific parsing is behind the `LanguageAdapter` interface
+(`src/lang/`) — TS/JS via `ts-morph` (`TsAdapter`, full precision), anything
+else via a single generic tree-sitter adapter (`TreeSitterAdapter`,
+per-grammar node-type tables, slightly coarser). If you're adding support
+for a new *editor*, you almost certainly want to write a new thin client
+against `@dryguard/lsp-server` (most editors speak LSP natively), not touch
+`core`. If you're adding support for a new *language*, you want a new
+`LanguageAdapter` (most likely another `TreeSitterAdapter` instance plus a
+grammar-specific node-type table), not a new engine.
 
 ## Local setup
 
@@ -65,9 +78,14 @@ Releases are automated with [Changesets](https://github.com/changesets/changeset
    pending changesets.
 3. Merging the Version Packages PR (itself a normal, reviewed PR) triggers
    the same workflow to publish:
-   - `@dryguard/core`, `@dryguard/mcp-server`, `@dryguard/lsp-server` → npm
+   - `@dryguard/core`, `@dryguard/mcp-server`, `@dryguard/lsp-server`, `@dryguard/cli` → npm
    - `dryguard-vscode` → the VS Code Marketplace **and** Open VSX (so
      VSCodium/Cursor/Windsurf/Gitpod/Theia users get updates too)
+
+The JetBrains plugin (`packages/jetbrains-plugin`) is Gradle/JVM, not pnpm —
+it isn't wired into `release.yml` and is published separately (see its own
+README) so a TypeScript-only release never depends on having a JVM
+toolchain in CI.
 
 Required repository secrets: `NPM_TOKEN`, `VSCE_PAT`, `OVSX_TOKEN`.
 

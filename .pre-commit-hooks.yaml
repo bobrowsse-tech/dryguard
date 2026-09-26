@@ -1,0 +1,20 @@
+# Lets this repo (or any downstream project) be used as a
+# https://pre-commit.com hook source:
+#
+#   # .pre-commit-config.yaml
+#   repos:
+#     - repo: https://github.com/dryguard-dev/dryguard
+#       rev: v0.1.0
+#       hooks:
+#         - id: dryguard
+#
+# `pre-commit` clones this repo, runs `npm install` in it (via the
+# `language: node` runtime), and invokes the `dryguard` bin with the list of
+# staged files as arguments — exactly what `dryguard precommit` expects.
+- id: dryguard
+  name: DryGuard (duplicate-code check)
+  description: Blocks commits that introduce structurally duplicate code.
+  entry: dryguard precommit
+  language: node
+  files: \.(ts|tsx|js|jsx|py|go)$
+  pass_filenames: true

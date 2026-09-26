@@ -1,5 +1,14 @@
 export * from "./types.js";
 export { WorkspaceIndex } from "./index/workspaceIndex.js";
 export { similarityScore, jaccard, couldMatch } from "./similarity/compare.js";
-export { normalizeToTokens, toShingles, computeSignature } from "./ast/normalize.js";
+export { semanticScore, bagCosineSimilarity, heuristicSemanticScorer } from "./similarity/semantic.js";
+export type { SemanticScorer } from "./similarity/semantic.js";
+export { analyzeFunction, toShingles } from "./ast/normalize.js";
 export { extractFunctions, nameOf } from "./ast/extract.js";
+export { loadConfig, configTemplate, DEFAULT_CONFIG, CONFIG_FILENAMES } from "./config/config.js";
+export { loadBaseline, saveBaseline, pairKey, makeBaselineEntry } from "./config/baseline.js";
+export { FileCache, hashContent } from "./cache/fileCache.js";
+export { LanguageRegistry } from "./lang/registry.js";
+export { TsAdapter } from "./lang/tsAdapter.js";
+export { TreeSitterAdapter, createDefaultTreeSitterAdapters } from "./lang/treeSitterAdapter.js";
+export type { LanguageAdapter, ExtractedUnit } from "./lang/types.js";

@@ -19,9 +19,13 @@ const MIN_STATEMENTS = 3;
 
 /**
  * Walks a source file and returns every function-like node big enough to be
- * a meaningful DRY candidate (skips trivial one-liners and stubs).
+ * a meaningful DRY candidate (skips trivial one-liners and stubs, and
+ * anything preceded by the configured ignore comment).
  */
-export function extractFunctions(sourceFile: SourceFile): ExtractableFunction[] {
+export function extractFunctions(
+  sourceFile: SourceFile,
+  options: { ignoreComment: string } = { ignoreComment: "dryguard-ignore" },
+): ExtractableFunction[] {
   const results: ExtractableFunction[] = [];
 
   sourceFile.forEachDescendant((node) => {
@@ -34,6 +38,8 @@ export function extractFunctions(sourceFile: SourceFile): ExtractableFunction[] 
       const body = node.getBody();
       if (!body) return;
 
+      if (isIgnored(node, options.ignoreComment)) return;
+
       const statementCount = Node.isBlock(body)
         ? body.getStatements().length
         : 1; // expression-bodied arrow function
@@ -45,6 +51,15 @@ export function extractFunctions(sourceFile: SourceFile): ExtractableFunction[] 
   });
 
   return results;
+}
+
+/** True if a `// dryguard-ignore` (or matching marker) leading comment precedes this node. */
+function isIgnored(node: Node, marker: string): boolean {
+  const ranges = [
+    ...node.getLeadingCommentRanges(),
+    ...(Node.isArrowFunction(node) ? node.getParent()?.getLeadingCommentRanges() ?? [] : []),
+  ];
+  return ranges.some((r) => r.getText().includes(marker));
 }
 
 function hasMeaningfulControlFlow(node: Node): boolean {

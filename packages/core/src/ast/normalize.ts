@@ -2,24 +2,46 @@ import { Node, SyntaxKind } from "ts-morph";
 import type { ExtractableFunction } from "./extract.js";
 import type { UnitSignature } from "../types.js";
 
-/**
- * Produces a normalized token stream for a function-like node: identifiers
- * are folded to their syntactic role (parameter, local, call target, etc.)
- * rather than their literal name, and literal values are folded to their
- * type. This is what lets `calculateTax(price)` and `computeTax(amount)`
- * compare as structurally identical even though no name matches.
- */
-export function normalizeToTokens(node: ExtractableFunction): string[] {
-  const tokens: string[] = [];
-  const localNames = new Set<string>();
+export interface AnalyzedFunction {
+  tokens: string[];
+  /** Real (un-folded) names of call targets / property accesses / free identifiers referenced. */
+  identifierBag: Map<string, number>;
+  signature: UnitSignature;
+}
 
-  // Seed local names from parameters so param usage folds consistently.
+/**
+ * Single traversal that produces everything needed for both comparison
+ * tiers: a normalized token stream for structural (Jaccard) comparison,
+ * where identifiers are folded to their syntactic role and literal values
+ * are folded to their type — so `calculateTax(price)` and
+ * `computeTax(amount)` compare as structurally identical — and, separately,
+ * a bag of the *real* names referenced (call targets, property accesses,
+ * free identifiers), which the opt-in semantic tier uses to catch functions
+ * that do the same thing via a different structural shape.
+ */
+export function analyzeFunction(node: ExtractableFunction): AnalyzedFunction {
+  const tokens: string[] = [];
+  const identifierBag = new Map<string, number>();
+  const localNames = new Set<string>();
+  let branchCount = 0;
+
   for (const param of node.getParameters()) {
     localNames.add(param.getName());
   }
 
+  const branchKinds = new Set([
+    SyntaxKind.IfStatement,
+    SyntaxKind.ForStatement,
+    SyntaxKind.ForInStatement,
+    SyntaxKind.ForOfStatement,
+    SyntaxKind.WhileStatement,
+    SyntaxKind.SwitchStatement,
+    SyntaxKind.TryStatement,
+  ]);
+
   node.forEachDescendant((child) => {
     const kind = child.getKind();
+    if (branchKinds.has(kind)) branchCount++;
 
     switch (kind) {
       case SyntaxKind.Identifier: {
@@ -27,8 +49,8 @@ export function normalizeToTokens(node: ExtractableFunction): string[] {
         if (localNames.has(text)) {
           tokens.push("ID_LOCAL");
         } else {
-          // Could be a call target, global, or member — keep a coarse role.
           tokens.push("ID_REF");
+          identifierBag.set(text, (identifierBag.get(text) ?? 0) + 1);
         }
         return;
       }
@@ -43,24 +65,29 @@ export function normalizeToTokens(node: ExtractableFunction): string[] {
       case SyntaxKind.FalseKeyword:
         tokens.push("LIT_BOOL");
         return;
-      case SyntaxKind.VariableDeclaration: {
+      case SyntaxKind.VariableDeclaration:
         if (Node.isVariableDeclaration(child)) {
           localNames.add(child.getName());
         }
         break;
-      }
       default:
         break;
     }
 
-    // Structural keywords: keep the syntax kind name itself, it's the shape
-    // we care about (IfStatement, ForStatement, BinaryExpression, ...).
-    if (isStructuralKind(kind)) {
+    if (STRUCTURAL_KINDS.has(kind)) {
       tokens.push(SyntaxKind[kind]);
     }
   });
 
-  return tokens;
+  return {
+    tokens,
+    identifierBag,
+    signature: {
+      paramCount: node.getParameters().length,
+      tokenCount: tokens.length,
+      branchCount,
+    },
+  };
 }
 
 const STRUCTURAL_KINDS = new Set<SyntaxKind>([
@@ -86,10 +113,6 @@ const STRUCTURAL_KINDS = new Set<SyntaxKind>([
   SyntaxKind.AwaitExpression,
 ]);
 
-function isStructuralKind(kind: SyntaxKind): boolean {
-  return STRUCTURAL_KINDS.has(kind);
-}
-
 /** Builds shingles (sliding windows of N tokens) for Jaccard-style comparison. */
 export function toShingles(tokens: string[], windowSize = 5): Set<string> {
   if (tokens.length < windowSize) {
@@ -100,29 +123,4 @@ export function toShingles(tokens: string[], windowSize = 5): Set<string> {
     shingles.add(tokens.slice(i, i + windowSize).join(" "));
   }
   return shingles;
-}
-
-export function computeSignature(
-  node: ExtractableFunction,
-  tokens: string[],
-): UnitSignature {
-  let branchCount = 0;
-  const branchKinds = new Set([
-    SyntaxKind.IfStatement,
-    SyntaxKind.ForStatement,
-    SyntaxKind.ForInStatement,
-    SyntaxKind.ForOfStatement,
-    SyntaxKind.WhileStatement,
-    SyntaxKind.SwitchStatement,
-    SyntaxKind.TryStatement,
-  ]);
-  node.forEachDescendant((d) => {
-    if (branchKinds.has(d.getKind())) branchCount++;
-  });
-
-  return {
-    paramCount: node.getParameters().length,
-    tokenCount: tokens.length,
-    branchCount,
-  };
 }

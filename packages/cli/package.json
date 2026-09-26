@@ -1,11 +1,11 @@
 {
-  "name": "@dryguard/mcp-server",
+  "name": "@dryguard/cli",
   "version": "0.1.0",
-  "description": "DryGuard MCP server — lets AI coding agents (Claude Code, Cursor, Copilot Workspace, Roo Code, ...) check for duplicate code before writing it.",
+  "description": "Headless DryGuard: `dryguard scan` for CI duplication reports and gating, `dryguard baseline` for adopting DryGuard on an existing codebase, and a pre-commit hook.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "dryguard-mcp": "./dist/cli.js"
+    "dryguard": "./dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,14 +15,12 @@
     "dev": "tsc -b --watch",
     "clean": "rm -rf dist *.tsbuildinfo",
     "typecheck": "tsc -b --noEmit",
-    "start": "node dist/cli.js",
     "test": "vitest run"
   },
   "dependencies": {
     "@dryguard/core": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.9.0",
-    "chokidar": "^4.0.3",
-    "zod": "^3.24.1"
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

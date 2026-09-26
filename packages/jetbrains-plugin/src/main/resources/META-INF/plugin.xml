@@ -1,0 +1,26 @@
+<idea-plugin>
+    <id>dev.dryguard.jetbrains</id>
+    <name>DryGuard</name>
+    <vendor email="bobrowsse@gmail.com" url="https://github.com/dryguard-dev/dryguard">DryGuard</vendor>
+    <description>
+        <![CDATA[
+        Catches structurally duplicate code — written by you or an AI coding
+        agent — before it lands, via the same DryGuard language server used
+        in VS Code, Neovim and other editors. Requires the LSP4IJ plugin.
+        ]]>
+    </description>
+
+    <!-- LSP4IJ does the generic LSP client work; we just register dryguard-lsp
+         as a server for the file types it covers. -->
+    <depends>com.redhat.devtools.lsp4ij</depends>
+
+    <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+        <server id="dryguardLanguageServer"
+                name="DryGuard"
+                factoryClass="dev.dryguard.jetbrains.DryGuardLanguageServerFactory"/>
+        <languageMapping language="TypeScript" serverId="dryguardLanguageServer"/>
+        <languageMapping language="JavaScript" serverId="dryguardLanguageServer"/>
+        <languageMapping language="Python" serverId="dryguardLanguageServer"/>
+        <languageMapping language="go" serverId="dryguardLanguageServer"/>
+    </extensions>
+</idea-plugin>
