@@ -18,7 +18,7 @@ return {
   docs = {
     description = [[
 DryGuard — structural duplicate-code detection.
-https://github.com/dryguard-dev/dryguard
+https://github.com/bobrowsse-tech/dryguard
 ]],
   },
 }

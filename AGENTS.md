@@ -29,9 +29,9 @@ current source of truth on what's verified vs. not.
 - npm is not logged in on a fresh machine, and the repository secrets
   `NPM_TOKEN`, `VSCE_PAT`, and `OVSX_TOKEN` are still required before
   `release.yml` can publish. `@dryguard/core` is not on npm yet. The VS
-  Code / Open VSX publisher id in the extension manifest is `dryguard-dev`;
-  that publisher and namespace have to be created in those marketplaces
-  before the first extension publish.
+  Code publisher id in the extension manifest is `bobrowsse-tech` (already
+  created). The Open VSX namespace `bobrowsse-tech` still has to be created
+  before the first Open VSX publish.
 - The JetBrains plugin (`packages/jetbrains-plugin`) is still a Gradle/Kotlin
   project outside the pnpm workspace. This tree has no Gradle wrapper, so
   `./gradlew` cannot run until a wrapper or a local Gradle install is added.
@@ -79,8 +79,8 @@ config file's values should override defaults).
 
 ## Things intentionally left for you to finish
 
-- **Add repository secrets** before `release.yml` can publish: `NPM_TOKEN` (npm automation token with publish rights for the `@dryguard` scope), `VSCE_PAT` (Azure DevOps PAT for the VS Code Marketplace publisher `dryguard-dev`), `OVSX_TOKEN` (Open VSX access token, same publisher namespace). Without `NPM_TOKEN`, the publish script skips npm and the workflow stays green.
-- **Reserve the npm scope and marketplace publisher name** (`@dryguard` on npm, `dryguard-dev` on VS Code Marketplace / Open VSX) if not already done — first publish will fail otherwise. Packages are already at `0.1.0` and have never been published; do not add a changeset just to re-bump that first version.
+- **Add repository secrets** before `release.yml` can publish: `NPM_TOKEN` (npm automation token with publish rights for the `@dryguard` scope), `VSCE_PAT` (Azure DevOps PAT with Marketplace → Manage for publisher `bobrowsse-tech`), `OVSX_TOKEN` (Open VSX access token for namespace `bobrowsse-tech`). Without `NPM_TOKEN`, the publish script skips npm and the workflow stays green.
+- **Reserve the npm scope and the Open VSX namespace** (`@dryguard` on npm, `bobrowsse-tech` on Open VSX) if not already done — first publish will fail otherwise. The VS Code Marketplace publisher `bobrowsse-tech` already exists. Packages are already at `0.1.0` and have never been published; do not add a changeset just to re-bump that first version.
 - **Build and manually test the JetBrains plugin** once Gradle is available (`cd packages/jetbrains-plugin && ./gradlew runIde`). There is no wrapper in the tree yet.
 - **Try the extension against a real duplicate** in a non-trivial codebase (not just the fixtures) and tune `threshold`/`semanticTier` in `.dryguardrc.json` if it's too noisy or too lax.
 - **Submit the Neovim config to `mason-registry`** (`editors/nvim/mason-registry.json` is a draft) once `@dryguard/lsp-server` is actually published to npm — that registry requires the package to exist first.
