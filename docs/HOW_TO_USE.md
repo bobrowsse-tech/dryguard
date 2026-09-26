@@ -42,7 +42,7 @@ looser, heuristic semantic tier (see [Similarity tiers](#similarity-tiers)).
 
 | Editor | How |
 |---|---|
-| VS Code / Cursor / Windsurf | Install "DryGuard" from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=dryguard-dev.dryguard-vscode) or [Open VSX](https://open-vsx.org/extension/dryguard-dev/dryguard-vscode). Activates automatically for JS/TS/Python/Go. |
+| VS Code / Cursor / Windsurf | Install "DryGuard" from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=bobrowsse-tech.dryguard-vscode) or [Open VSX](https://open-vsx.org/extension/bobrowsse-tech/dryguard-vscode). Activates automatically for JS/TS/Python/Go. |
 | Neovim | See [`editors/nvim/README.md`](../editors/nvim/README.md) — a copy-paste `nvim-lspconfig` config, no separate plugin needed. |
 | JetBrains (IntelliJ, PyCharm, GoLand, WebStorm, ...) | Install [LSP4IJ](https://plugins.jetbrains.com/plugin/23257-lsp4ij), then the DryGuard plugin (see [`packages/jetbrains-plugin`](../packages/jetbrains-plugin)). |
 | Sublime, Helix, Emacs, anything else with LSP support | Point its LSP client config at `npx @dryguard/lsp-server` (stdio) for `.ts/.tsx/.js/.jsx/.py/.go` files. |

@@ -3,7 +3,7 @@
   "displayName": "DryGuard — DRY Enforcement for AI Coding Agents",
   "description": "Catches structurally duplicate code — written by you or your AI agent — before it lands, and offers an AI-assisted merge.",
   "version": "0.1.0",
-  "publisher": "dryguard-dev",
+  "publisher": "bobrowsse-tech",
   "license": "MIT",
   "private": true,
   "author": "Bob Rowsse Walakira",
