@@ -1,5 +1,6 @@
 import { createRequire } from "node:module";
-import { copyFileSync, mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import esbuild from "esbuild";
@@ -35,6 +36,11 @@ const server = {
   entryPoints: ["../lsp-server/src/cli.ts"],
   outfile: "dist/server.mjs",
   format: "esm",
+  // Bundle core from source so this build does not require `tsc` to have
+  // already emitted packages/core/dist (CI packages the extension on its own).
+  alias: {
+    "@dryguard/core": join(here, "../core/src/index.ts"),
+  },
   banner: {
     js: [
       "import { createRequire } from 'node:module';",
@@ -48,6 +54,10 @@ const server = {
 };
 
 function copyServerAssets() {
+  const pythonWasm = join(here, "../core/grammars/python.wasm");
+  if (!existsSync(pythonWasm)) {
+    execFileSync(process.execPath, [join(here, "../../scripts/fetch-grammars.mjs")], { stdio: "inherit" });
+  }
   copyFileSync(coreRequire.resolve("web-tree-sitter/tree-sitter.wasm"), join(here, "dist/tree-sitter.wasm"));
   const grammarsDir = join(here, "dist/grammars");
   mkdirSync(grammarsDir, { recursive: true });
