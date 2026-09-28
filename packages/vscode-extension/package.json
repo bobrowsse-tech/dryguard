@@ -4,6 +4,11 @@
   "description": "Catches structurally duplicate code — written by you or your AI agent — before it lands, and offers an AI-assisted merge.",
   "version": "0.1.0",
   "publisher": "bobrowsse-tech",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0B6E74",
+    "theme": "dark"
+  },
   "license": "MIT",
   "private": true,
   "author": "Bob Rowsse Walakira",
@@ -25,7 +30,9 @@
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascript",
-    "onLanguage:javascriptreact"
+    "onLanguage:javascriptreact",
+    "onLanguage:python",
+    "onLanguage:go"
   ],
   "main": "./dist/extension.js",
   "contributes": {
