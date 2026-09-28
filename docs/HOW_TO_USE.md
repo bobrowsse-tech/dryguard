@@ -1,9 +1,55 @@
 # How to use DryGuard
 
+<p align="center">
+  <img src="../packages/vscode-extension/images/icon.png" width="96" alt="DryGuard icon: a teal shield with code brackets">
+</p>
+
 This is the full usage guide across every surface. If you just want the
 five-minute version, the [README](../README.md) covers the common cases;
 come here for configuration, adoption on an existing codebase, CI, and
 per-editor setup.
+
+## What to expect
+
+DryGuard compares **functions** (and methods) to functions already in the
+workspace. A hit is a warning, not an automatic rewrite.
+
+You will see a message like this on the new function:
+
+```text
+DRY violation: this looks 92% structurally identical to 'calculateTax' in src/billing.ts:14
+```
+
+| Surface | What happens on a hit | What does not happen |
+|---|---|---|
+| Editor | Yellow warning on the duplicate, plus two quick fixes (below). | The file still saves. The build is not failed by DryGuard itself. |
+| MCP | `check_similarity` returns `isDuplicate: true` and the existing function. | The server does not write or delete code. The agent decides whether to reuse it. |
+| CLI / CI | `scan` prints the pair and exits **1**. | Exit **0** when every match is already in the baseline, or when nothing matches. |
+| Pre-commit | Only duplicates in files you are committing can block the commit. | An old duplicate in a file you did not touch does not block this commit. |
+
+A function is compared when its body has **at least three statements**, or a
+branch or loop. One-line helpers and empty stubs are skipped, so a pair of
+tiny wrappers will not light up.
+
+The default structural threshold is **0.85**. Rename the function and the
+parameters and a copy of the same logic still scores high. A different shape
+that happens to call the same APIs (a `for` loop versus `.reduce()`) is a
+**semantic** match, and that tier is **off** until you opt in. Turn it on
+when you want that extra net, and raise `semanticTier.threshold` if it gets
+noisy.
+
+Quick fixes on an editor warning:
+
+- **DryGuard: View existing 'name'** — jumps to the original. No edit.
+- **DryGuard: Merge with 'name' using the IDE's AI assistant** — VS Code
+  family only. It asks **GitHub Copilot's** language model in that editor to
+  merge the two functions and applies the result as a workspace edit. Review
+  the diff. If Copilot is not available, DryGuard opens the existing function
+  beside the new one and does not change either file.
+
+Python and Go use the bundled tree-sitter grammars. Their fingerprints are a
+little coarser than TypeScript and JavaScript (see
+[Language support](#language-support)).
 
 ## 1. Install once, use everywhere
 
@@ -48,8 +94,8 @@ looser, heuristic semantic tier (see [Similarity tiers](#similarity-tiers)).
 | Sublime, Helix, Emacs, anything else with LSP support | Point its LSP client config at `npx @dryguard/lsp-server` (stdio) for `.ts/.tsx/.js/.jsx/.py/.go` files. |
 
 Code actions on a flagged duplicate:
-- **View existing match** — jumps to the original function.
-- **Merge with the IDE's AI assistant** (VS Code only, via `vscode.lm`) — asks whichever model your Copilot/Claude/etc. chat is already using to merge the two functions, then applies the result as a workspace edit.
+- **DryGuard: View existing 'name'** — jumps to the original function. No files change.
+- **DryGuard: Merge with 'name' using the IDE's AI assistant** — implemented by the VS Code extension, not by the language server. It calls GitHub Copilot through `vscode.lm`. If Copilot is not signed in, the extension opens the existing function beside the new one and leaves both files untouched. Neovim, JetBrains, and other LSP clients get the same warning and the "view existing" action; they do not get the Copilot merge.
 
 ## 4. In CI (headless)
 
@@ -163,13 +209,13 @@ The marker text is configurable via `ignoreComment` if `dryguard-ignore` collide
 | Python (`.py`) | tree-sitter (`TreeSitterAdapter`) | Slightly coarser — see caveat below. |
 | Go (`.go`) | tree-sitter (`TreeSitterAdapter`) | Slightly coarser — see caveat below. |
 
-Tree-sitter grammars aren't bundled (they're prebuilt binary `.wasm` files);
-fetch them once with network access:
+The published npm packages and the VS Code extension already include the
+Python and Go grammars (`python.wasm` and `go.wasm`). Installing DryGuard
+does not require a separate grammar download.
 
-```bash
-pnpm add -D tree-sitter-wasms --filter @dryguard/core
-node scripts/fetch-grammars.mjs
-```
+If you are building this repository from source, `pnpm build` fetches those
+grammars into `packages/core/grammars/` (they are gitignored). You can also
+run `node scripts/fetch-grammars.mjs` yourself.
 
 Caveat: the generic tree-sitter adapter folds every identifier to one
 `ID_REF` token (it doesn't know "this one is a parameter" without a

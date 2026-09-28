@@ -35,10 +35,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       { language: "typescriptreact" },
       { language: "javascript" },
       { language: "javascriptreact" },
+      { language: "python" },
+      { language: "go" },
     ],
     synchronize: {
       configurationSection: "dryguard",
-      fileEvents: vscode.workspace.createFileSystemWatcher("**/*.{ts,tsx,js,jsx}"),
+      fileEvents: vscode.workspace.createFileSystemWatcher("**/*.{ts,tsx,js,jsx,py,go}"),
     },
     initializationOptions: {
       threshold: vscode.workspace.getConfiguration("dryguard").get("threshold"),
