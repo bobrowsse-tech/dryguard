@@ -1,6 +1,6 @@
 {
   "name": "@dryguard/mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DryGuard MCP server — lets AI coding agents (Claude Code, Cursor, Copilot Workspace, Roo Code, ...) check for duplicate code before writing it.",
   "license": "MIT",
   "author": "Bob Rowsse Walakira",
@@ -25,7 +25,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch",
