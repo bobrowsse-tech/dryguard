@@ -1,0 +1,35 @@
+name: Publish Open VSX
+
+# The release workflow publishes Open VSX only after a new npm publish.
+# This job publishes the current extension package on its own, for the first
+# Open VSX release and for any later catch-up.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Package VS Code extension
+        run: pnpm --filter dryguard-vscode package
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
+        run: pnpm --filter dryguard-vscode publish:openvsx
