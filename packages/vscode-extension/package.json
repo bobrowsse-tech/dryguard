@@ -2,7 +2,7 @@
   "name": "dryguard-vscode",
   "displayName": "DryGuard — DRY Enforcement for AI Coding Agents",
   "description": "Catches structurally duplicate code — written by you or your AI agent — before it lands, and offers an AI-assisted merge.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "bobrowsse-tech",
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -24,8 +24,18 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "categories": ["Linters", "AI", "Programming Languages"],
-  "keywords": ["dry", "duplicate code", "refactoring", "ai agent", "code quality"],
+  "categories": [
+    "Linters",
+    "AI",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "dry",
+    "duplicate code",
+    "refactoring",
+    "ai agent",
+    "code quality"
+  ],
   "activationEvents": [
     "onLanguage:typescript",
     "onLanguage:typescriptreact",

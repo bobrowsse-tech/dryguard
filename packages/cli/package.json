@@ -1,6 +1,6 @@
 {
   "name": "@dryguard/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Headless DryGuard: `dryguard scan` for CI duplication reports and gating, `dryguard baseline` for adopting DryGuard on an existing codebase, and a pre-commit hook.",
   "license": "MIT",
   "author": "Bob Rowsse Walakira",
@@ -25,7 +25,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b --watch",

@@ -1,6 +1,6 @@
 {
   "name": "@dryguard/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Structural duplicate-code detection engine for DryGuard (AST fingerprinting + similarity scoring).",
   "license": "MIT",
   "author": "Bob Rowsse Walakira",
@@ -28,7 +28,10 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "grammars"],
+  "files": [
+    "dist",
+    "grammars"
+  ],
   "scripts": {
     "build": "tsc -b && node ../../scripts/fetch-grammars.mjs",
     "dev": "tsc -b --watch",
