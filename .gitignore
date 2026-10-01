@@ -12,3 +12,5 @@ coverage/
 *.tsbuildinfo
 packages/core/grammars/*.wasm
 .dryguard/cache.json
+# Maintainer snapshot. Stays on disk; never publish it.
+docs/PROJECT_STATUS.md
