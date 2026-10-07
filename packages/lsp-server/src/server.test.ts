@@ -10,6 +10,11 @@ import { DIAGNOSTIC_SOURCE, startServer } from "./server.js";
 interface LspMessage {
   id?: number;
   method?: string;
+  result?: {
+    capabilities?: {
+      executeCommandProvider?: unknown;
+    };
+  };
   params?: {
     diagnostics?: Array<{ source?: string; message?: string }>;
   };
@@ -117,10 +122,12 @@ describe("DryGuard language server", () => {
 
       const deadline = Date.now() + 15000;
       let initialized = false;
+      let executeCommandProvider: unknown = "missing-initialize";
       let diagnosticMessage = "";
       while (Date.now() < deadline) {
         const message = await reader.next(deadline - Date.now());
         if (message.id === 1) {
+          executeCommandProvider = message.result?.capabilities?.executeCommandProvider;
           clientToServer.write(encode({ jsonrpc: "2.0", method: "initialized", params: {} }));
           clientToServer.write(
             encode({
@@ -142,6 +149,7 @@ describe("DryGuard language server", () => {
       }
 
       expect(initialized).toBe(true);
+      expect(executeCommandProvider).toBeUndefined();
       expect(diagnosticMessage).toContain("calculateTax");
     } finally {
       // vscode-languageserver calls process.exit when its input stream

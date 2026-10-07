@@ -57,7 +57,6 @@ export function startServer(
       capabilities: {
         textDocumentSync: TextDocumentSyncKind.Incremental,
         codeActionProvider: true,
-        executeCommandProvider: { commands: [REFACTOR_COMMAND] },
       },
     };
   });
