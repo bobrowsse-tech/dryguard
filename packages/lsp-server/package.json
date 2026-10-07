@@ -1,6 +1,6 @@
 {
   "name": "@dryguard/lsp-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DryGuard Language Server — one implementation of DRY-violation diagnostics and quick fixes for every LSP-capable editor (VS Code, Neovim, JetBrains via LSP4IJ, Sublime, Helix, Emacs, ...).",
   "license": "MIT",
   "author": "Bob Rowsse Walakira",

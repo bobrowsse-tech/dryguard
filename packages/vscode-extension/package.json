@@ -2,7 +2,7 @@
   "name": "dryguard-vscode",
   "displayName": "DryGuard — DRY Enforcement for AI Coding Agents",
   "description": "Catches structurally duplicate code — written by you or your AI agent — before it lands, and offers an AI-assisted merge.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "bobrowsse-tech",
   "icon": "images/icon.png",
   "galleryBanner": {
