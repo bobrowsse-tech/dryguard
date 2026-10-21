@@ -1,6 +1,6 @@
 # DryGuard
 
-![DryGuard](./images/icon.png)
+![DryGuard](https://github.com/bobrowsse-tech/dryguard/raw/HEAD/packages/vscode-extension/images/icon.png)
 
 DryGuard warns you when a function you just wrote — or that an AI agent just wrote — is structurally the same as one already in the workspace. It underlines the new function and tells you where the existing one lives, so the duplicate can be reused or merged before it lands.
 
