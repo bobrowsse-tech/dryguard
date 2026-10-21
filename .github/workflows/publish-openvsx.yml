@@ -29,6 +29,16 @@ jobs:
       - name: Package VS Code extension
         run: pnpm --filter dryguard-vscode package
 
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "VSCE_PAT is not set; skipping the VS Code Marketplace."
+            exit 0
+          fi
+          pnpm --filter dryguard-vscode publish:vscode
+
       - name: Publish to Open VSX
         env:
           OVSX_TOKEN: ${{ secrets.OVSX_TOKEN }}
