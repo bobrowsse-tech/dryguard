@@ -1,5 +1,11 @@
 # dryguard-vscode
 
+## 0.1.3
+
+### Patch Changes
+
+- 1979be7: Show the extension icon in the Marketplace and Open VSX listing from its real path in the repository.
+
 ## 0.1.2
 
 ### Patch Changes
